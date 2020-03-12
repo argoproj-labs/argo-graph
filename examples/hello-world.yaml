@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: b
+  labels:
+    argoproj.io/node: "true"
+spec:
+  containers:
+    - name: main
+      image: cowsay:v1
