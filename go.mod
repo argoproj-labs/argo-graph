@@ -1,4 +1,4 @@
-module github.com/argoproj/argo-cp
+module github.com/argoproj/argo-graph
 
 go 1.13
 
