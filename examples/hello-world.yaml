@@ -1,9 +1,22 @@
 apiVersion: v1
 kind: Pod
 metadata:
+  name: a
+  labels:
+    argoproj.io/vertex: "true"
+spec:
+  containers:
+    - name: main
+      image: cowsay:v1
+---
+apiVersion: v1
+kind: Pod
+metadata:
   name: b
   labels:
-    argoproj.io/node: "true"
+    argoproj.io/vertex: "true"
+  annotations:
+    argoproj.io/edges: "/a"
 spec:
   containers:
     - name: main
