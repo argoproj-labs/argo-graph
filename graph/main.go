@@ -41,13 +41,12 @@ func main() {
 	}, &corev1.Pod{}, time.Second*30, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			y := Vertex(clusterName + "/" + string(obj.(metav1.Object).GetName()))
+			graph.AddVertex(y)
 			edges, ok := obj.(metav1.Object).GetAnnotations()["argoproj.io/edges"]
 			if ok {
 				for _, id := range strings.Split(edges, ",") {
 					x := Vertex(id)
 					e := Edge{x, y}
-					graph.AddVertex(x)
-					graph.AddVertex(y)
 					graph.AddEdge(e)
 					log.Infof("%v", e)
 				}
@@ -59,7 +58,7 @@ func main() {
 	stop := make(chan struct{})
 	go controller.Run(stop)
 
-	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/api/graph", func(w http.ResponseWriter, r *http.Request) {
 		marshal, err := json.Marshal(graph)
 		if err != nil {
 			panic(err)
@@ -70,10 +69,12 @@ func main() {
 		}
 	})
 	addr := ":2746"
-	err = http.ListenAndServe(addr, nil)
-	if err != nil {
-		panic(err)
-	}
+	go func() {
+		err = http.ListenAndServe(addr, nil)
+		if err != nil {
+			panic(err)
+		}
+	}()
 	log.WithFields(log.Fields{"clusterName": clusterName, "addr": addr}).Info("started")
 	<-stop
 }

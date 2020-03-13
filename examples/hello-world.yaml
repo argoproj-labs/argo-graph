@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: a
+  name: kspacey
   labels:
     argoproj.io/vertex: "true"
 spec:
@@ -12,11 +12,59 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: b
+  name: swilliams
   labels:
     argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/edges: "/a"
+    argoproj.io/edges: "/kspacey"
+spec:
+  containers:
+    - name: main
+      image: cowsay:v1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bpitt
+  labels:
+    argoproj.io/vertex: "true"
+spec:
+  containers:
+    - name: main
+      image: cowsay:v1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hford
+  labels:
+    argoproj.io/vertex: "true"
+spec:
+  containers:
+    - name: main
+      image: cowsay:v1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lwilson
+  labels:
+    argoproj.io/vertex: "true"
+  annotations:
+    argoproj.io/edges: "/hford"
+spec:
+  containers:
+    - name: main
+      image: cowsay:v1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kbacon
+  labels:
+    argoproj.io/vertex: "true"
+  annotations:
+    argoproj.io/edges: "/swilliams,/bpitt,/lwilson"
 spec:
   containers:
     - name: main

@@ -1,3 +1,5 @@
 /.idea
 /dist
 /*.iml
+/ui/yarn-error.log
+/ui/node_modules/
