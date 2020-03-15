@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -37,22 +38,25 @@ func main() {
 			opts.LabelSelector = "argoproj.io/vertex"
 			return client.CoreV1().Pods("").Watch(opts)
 		},
-	}, nil, time.Second*30, cache.ResourceEventHandlerFuncs{
+	}, &v1.Pod{}, time.Second*30, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(iface interface{}) {
-			obj := iface.(metav1.Object)
-			y := Vertex(obj.GetClusterName() + "/" + obj.GetNamespace() + "/" + obj.GetName())
+			obj := iface.(*v1.Pod)
+			y := Vertex(obj.GetClusterName() + "/" + obj.GetNamespace() + "/" + obj.Kind + "/" + obj.GetName())
 			graph.AddVertex(y)
 			edges, ok := obj.GetAnnotations()["argoproj.io/edges"]
 			if ok {
 				for _, id := range strings.Split(edges, ",") {
-					parts := strings.SplitN(id, "/", 3)
+					parts := strings.SplitN(id, "/", 4)
 					if parts[0] == "" {
 						parts[0] = obj.GetClusterName()
 					}
 					if parts[1] == "" {
 						parts[1] = obj.GetNamespace()
 					}
-					x := Vertex(parts[0] + "/" + parts[1] + "/" + parts[2])
+					if parts[2] == "" {
+						parts[2] = obj.Kind
+					}
+					x := Vertex(parts[0] + "/" + parts[1] + "/" + parts[2] + "/" + parts[3])
 					e := Edge{x, y}
 					graph.AddEdge(e)
 					log.Infof("%v", e)
