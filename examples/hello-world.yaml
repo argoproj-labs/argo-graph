@@ -16,7 +16,7 @@ metadata:
   labels:
     argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/edges: "/kspacey"
+    argoproj.io/edges: "//kspacey"
 spec:
   containers:
     - name: main
@@ -51,7 +51,7 @@ metadata:
   labels:
     argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/edges: "/hford"
+    argoproj.io/edges: "//hford"
 spec:
   containers:
     - name: main
@@ -64,7 +64,7 @@ metadata:
   labels:
     argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/edges: "/swilliams,/bpitt,/lwilson"
+    argoproj.io/edges: "//swilliams,//bpitt,//lwilson"
 spec:
   containers:
     - name: main

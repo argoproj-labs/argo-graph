@@ -18,6 +18,8 @@ yarn start
 ```
 
 ```
+kubectl delete pod -l argoproj.io/vertex
+kubectl delete svc -l argoproj.io/vertex
 kubectl apply -f examples/hello-world.yaml
 ```
 

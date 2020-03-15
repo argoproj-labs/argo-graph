@@ -42,7 +42,7 @@ export class GraphPage extends React.Component<{}, Graph> {
         g.setDefaultEdgeLabel(function () {
             return {};
         });
-        (this.state.vertices || []).forEach(v => g.setNode(v, {label: v, width: 40, height: 20}));
+        (this.state.vertices || []).forEach(v => g.setNode(v, {label: v, width: 100, height: 20}));
         (this.state.edges || []).forEach(e => g.setEdge(e.x, e.y));
         dagre.layout(g);
         const edges: { from: string; to: string; lines: Line[] }[] = [];
