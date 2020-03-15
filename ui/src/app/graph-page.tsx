@@ -3,6 +3,7 @@ import * as dagre from 'dagre';
 import {Page} from "argo-ui/src/index";
 
 const request = require('superagent');
+require('./graph.scss');
 
 interface Graph {
     vertices?: string[];
@@ -62,58 +63,61 @@ export class GraphPage extends React.Component<{}, Graph> {
             edges.push({from: v.v, to: v.w, lines});
         });
 
+        const nodes = g.nodes().map((id) => g.node(id));
+        const left = vertexSize * 2;
+        const top = vertexSize * 2;
+        const width = nodes.map(n => n.x + n.width).reduce((l, r) => Math.max(l, r), 0) + left * 2;
+        const height = nodes.map(n => n.y + n.height).reduce((l, r) => Math.max(l, r), 0) + top * 2;
+
         return (
             <Page title='Argo Graph'>
-                <div className='row'>
-                    <div className='columns small-12'>
-                        <div className='graph' style={{margin: 40}}>
-                            {g.nodes().map((id) => g.node(id)).map((n) => <>
-                                <div key={`vertex-${n.label}`} style={{
-                                    position: "absolute",
-                                    left: n.x - vertexSize / 2,
-                                    top: n.y - vertexSize / 2,
-                                    width: vertexSize,
-                                    height: vertexSize,
-                                    borderRadius: vertexSize / 2,
-                                    backgroundColor: "purple",
-                                    border: "1px solid #888"
-                                }}/>
-                                <div key={`label-${n.label}`} style={{
-                                    position: "absolute",
-                                    left: n.x - ranksep / 2,
-                                    top: n.y + vertexSize / 2,
-                                    width: ranksep,
-                                    textAlign: "center",
-                                    fontSize: "0.75em",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis"
-                                }}>{n.label}</div>
-                            </>)}
-                            {edges.map(edge => (
-                                <div key={`edge-${edge.from}-${edge.to}`}>
-                                    {edge.lines.map((line, i) => {
-                                        const distance = Math.sqrt(Math.pow(line.x1 - line.x2, 2) + Math.pow(line.y1 - line.y2, 2));
-                                        const xMid = (line.x1 + line.x2) / 2;
-                                        const yMid = (line.y1 + line.y2) / 2;
-                                        const angle = (Math.atan2(line.y1 - line.y2, line.x1 - line.x2) * 180) / Math.PI;
-                                        return (
-                                            <div
-                                                key={`line-${edge.from}-${edge.to}-${i}`}
-                                                style={{
-                                                    position: "absolute",
-                                                    width: distance,
-                                                    left: xMid - distance / 2,
-                                                    top: yMid,
-                                                    transform: `rotate(${angle}deg)`,
-                                                    borderTop: "1px solid #888"
-                                                }}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            ))}
+                <div className='graph' style={{paddingLeft: 20, width: width, height: height}}>
+                    {nodes.map((n) => <>
+                        <div key={`vertex-${n.label}`} style={{
+                            position: "absolute",
+                            left: left + n.x - vertexSize / 2,
+                            top: top + n.y - vertexSize / 2,
+                            width: vertexSize,
+                            height: vertexSize,
+                            borderRadius: vertexSize / 2,
+                            backgroundColor: "#eee",
+                            border: "1px solid #888"
+                        }}/>
+                        <div key={`label-${n.label}`} style={{
+                            position: "absolute",
+                            left: left + n.x - ranksep / 2,
+                            top: top + n.y + vertexSize / 2,
+                            width: ranksep,
+                            textAlign: "center",
+                            fontSize: "0.75em",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis"
+                        }}>{n.label}</div>
+                    </>)}
+                    {edges.map(edge => (
+                        <div key={`edge-${edge.from}-${edge.to}`}>
+                            {edge.lines.map((line, i) => {
+                                const distance = Math.sqrt(Math.pow(line.x1 - line.x2, 2) + Math.pow(line.y1 - line.y2, 2));
+                                const xMid = (line.x1 + line.x2) / 2;
+                                const yMid = (line.y1 + line.y2) / 2;
+                                const angle = (Math.atan2(line.y1 - line.y2, line.x1 - line.x2) * 180) / Math.PI;
+                                return (
+                                    <div
+                                        key={`line-${edge.from}-${edge.to}-${i}`}
+                                        className='line'
+                                        style={{
+                                            position: "absolute",
+                                            width: distance,
+                                            left: left + xMid - distance / 2,
+                                            top: top + yMid,
+                                            transform: `rotate(${angle}deg)`,
+                                            borderTop: "1px solid #888"
+                                        }}
+                                    />
+                                );
+                            })}
                         </div>
-                    </div>
+                    ))}
                 </div>
             </Page>
         );

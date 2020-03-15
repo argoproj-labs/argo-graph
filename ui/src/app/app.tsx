@@ -23,7 +23,7 @@ export class App extends React.Component<{}, {}> {
             <Provider value={this.context}>
                 <Router history={history}>
                     <Layout navItems={[
-                        {title: "Home", iconClassName: 'fa fa-home', path: ""}
+                        {title: "Home", iconClassName: 'fa fa-project-diagram', path: ""}
                     ]}>
                         <Route component={GraphPage}/>
                     </Layout>
