@@ -18,7 +18,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var dropSchema = false
+var dropSchema bool
 
 var ServerCommand = &cobra.Command{
 	Use: "server",
@@ -32,7 +32,7 @@ var ServerCommand = &cobra.Command{
 }
 
 func init() {
-	ServerCommand.Flags().BoolVar(&dropSchema, "--drop-schema", false, "Drop the schema on start")
+	ServerCommand.Flags().BoolVar(&dropSchema, "--drop-schema", false, "Drop the database's schema on start")
 }
 
 func getClusterConfigs() map[string]*rest.Config {
@@ -49,8 +49,10 @@ func getClusterConfigs() map[string]*rest.Config {
 }
 
 func startHttpServer(ctx context.Context, db DB) {
-	http.HandleFunc("/api/v1/graph/", func(w http.ResponseWriter, r *http.Request) {
-		marshal, err := json.Marshal(db.GetGraph(ctx))
+	pattern := "/api/v1/graph/"
+	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		guid := GUID(strings.TrimPrefix(r.URL.Path, pattern))
+		marshal, err := json.Marshal(db.GetGraph(ctx, guid))
 		checkError(err)
 		_, err = w.Write(marshal)
 		checkError(err)
@@ -84,12 +86,12 @@ func startWatchingCluster(ctx context.Context, clusterName string, config *rest.
 		checkError(err)
 		for _, r := range list.APIResources {
 			subject := schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: r.Name}
-			go watchResources(ctx, d.Resource(subject), subject, r.Name, db)
+			go watchResources(ctx, d.Resource(subject), subject, clusterName, r.Name, db)
 		}
 	}
 }
 
-func watchResources(ctx context.Context, resource dynamic.ResourceInterface, subject schema.GroupVersionResource, kind string, db DB) {
+func watchResources(ctx context.Context, resource dynamic.ResourceInterface, subject schema.GroupVersionResource, clusterName, kind string, db DB) {
 	w, err := resource.Watch(metav1.ListOptions{LabelSelector: "graph.argoproj.io/node"})
 	if errors.IsNotFound(err) || errors.IsMethodNotSupported(err) {
 		log.WithField("subject", subject).Info(err)
@@ -105,7 +107,7 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 		case event, ok := <-w.ResultChan():
 			if ok && event.Type == watch.Added {
 				obj := event.Object.(*unstructured.Unstructured)
-				x := NewGUID(obj.GetClusterName(), obj.GetNamespace(), kind, obj.GetName())
+				x := NewGUID(clusterName, obj.GetNamespace(), kind, obj.GetName())
 				label, ok := obj.GetAnnotations()["graph.argoproj.io/node-label"]
 				if !ok {
 					label = obj.GetName()
@@ -120,7 +122,7 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 							continue
 						}
 						if parts[0] == "" {
-							parts[0] = obj.GetClusterName()
+							parts[0] = clusterName
 						}
 						if parts[1] == "" {
 							parts[1] = obj.GetNamespace()

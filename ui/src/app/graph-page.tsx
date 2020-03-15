@@ -14,15 +14,15 @@ interface Line {
     y2: number;
 }
 
-export class GraphPage extends React.Component<{}, Graph> {
+export class GraphPage extends React.Component<{ guid: string }, Graph> {
 
-    constructor(props: Readonly<{}>) {
+    constructor(props: Readonly<{ guid: string }>) {
         super(props);
         this.state = {};
     }
 
     componentDidMount() {
-        request.get("/api/v1/graph")
+        request.get("/api/v1/graph/" + this.props.guid)
             .then((r: { text: string }) => {
                 this.setState(JSON.parse(r.text) as Graph);
             })
@@ -42,6 +42,7 @@ export class GraphPage extends React.Component<{}, Graph> {
             height: nodeSize
         }));
         (this.state.edges || []).forEach(e => g.setEdge(e.x, e.y));
+
         dagre.layout(g);
         const edges: { from: string; to: string; lines: Line[] }[] = [];
         g.edges().forEach(v => {
@@ -60,28 +61,33 @@ export class GraphPage extends React.Component<{}, Graph> {
             edges.push({from: v.v, to: v.w, lines});
         });
 
-        const nodes = g.nodes().map((id) => g.node(id));
+        const nodes = g.nodes().map((id) => (({...g.node(id), ...{id: id}})));
         const left = nodeSize * 2;
         const top = nodeSize * 2;
         const width = nodes.map(n => n.x + n.width).reduce((l, r) => Math.max(l, r), 0) + left * 2;
         const height = nodes.map(n => n.y + n.height).reduce((l, r) => Math.max(l, r), 0) + top * 2;
 
         return (
-            <Page title='Argo Graph'>
+            <Page title='Argo Graph' toolbar={{breadcrumbs: [{title: this.props.guid}]}}>
                 <div className='graph' style={{paddingLeft: 20, width: width, height: height}}>
-                    {nodes.map((n) => <>
-                        <div key={`node-${n.label}`} style={{
-                            position: "absolute",
-                            left: left + n.x - nodeSize / 2,
-                            top: top + n.y - nodeSize / 2,
-                            width: nodeSize,
-                            height: nodeSize,
-                            borderRadius: nodeSize / 2,
-                            backgroundColor: "#eee",
-                            border: "1px solid #888",
-                            textAlign: "center",
-                            lineHeight: nodeSize + "px"
-                        }}>{n.kind.substring(0, 1).toUpperCase()}</div>
+                    {
+                        nodes.length == 0 && <p>No nodes</p>
+                    }
+                    {nodes.map((n: any) => <>
+                        <a key={`node-${n.id}`}
+                           href={`/graph/${n.id}`}
+                           style={{
+                               position: "absolute",
+                               left: left + n.x - nodeSize / 2,
+                               top: top + n.y - nodeSize / 2,
+                               width: nodeSize,
+                               height: nodeSize,
+                               borderRadius: nodeSize / 2,
+                               backgroundColor: "#eee",
+                               border: "1px solid #888",
+                               textAlign: "center",
+                               lineHeight: nodeSize + "px"
+                           }}>{n.kind.substring(0, 1).toUpperCase()}</a>
                         <div key={`label-${n.label}`} style={{
                             position: "absolute",
                             left: left + n.x - ranksep / 2,

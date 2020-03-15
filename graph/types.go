@@ -37,8 +37,8 @@ func (e Edge) String() string {
 type Nodes []Node
 type Edges []Edge
 type Graph struct {
-	Nodes `json:"nodes"`
-	Edges `json:"edges"`
+	Nodes Nodes `json:"nodes"`
+	Edges Edges `json:"edges"`
 }
 
 func (g *Graph) AddNode(v Node) {

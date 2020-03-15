@@ -36,9 +36,7 @@ func (d *dgraphDB) getUID(ctx context.Context, xid GUID) string {
 }
 
 func (d *dgraphDB) AddNode(ctx context.Context, v Node) {
-
 	uid := d.getUID(ctx, v.GUID)
-
 	if uid == "" {
 		log.WithField("node", v).Debug("AddNode")
 		_, err := d.dg.NewTxn().Mutate(ctx, &api.Mutation{CommitNow: true, SetJson: []byte(fmt.Sprintf(`{"set": [{"xid": "%s", "label": "%s"}]}`, v.GUID, v.Label))})
@@ -65,30 +63,33 @@ func (d *dgraphDB) AddEdge(ctx context.Context, e Edge) {
 	checkError(err)
 }
 
-func (d *dgraphDB) GetGraph(ctx context.Context) Graph {
-	resp, err := d.dg.NewTxn().QueryWithVars(ctx, `query Me(){
-	me(func: has(xid))  {
+func add(g *Graph, rs []Resource) {
+	for _, r := range rs {
+		g.AddNode(Node{GUID: GUID(r.XID), Label: r.Label})
+		for _, y := range r.Follows {
+			g.AddEdge(Edge{GUID(r.XID), GUID(y.XID)})
+		}
+		add(g, r.Follows)
+	}
+}
+
+func (d *dgraphDB) GetGraph(ctx context.Context, guid GUID) Graph {
+	resp, err := d.dg.NewTxn().Query(ctx, fmt.Sprintf(`query Me(){
+	me(func: eq(xid, "%s"))  @recurse(depth: 4){
         xid
         label
-        follows {
-           xid
-        }
+        follows
     }
-}`, map[string]string{})
+}`, guid))
 	checkError(err)
 	type Root struct {
 		Me []Resource `json:"me"`
 	}
 	var r Root
 	checkError(json.Unmarshal(resp.Json, &r))
-	g := Graph{}
-	for _, r := range r.Me {
-		g.AddNode(Node{GUID: GUID(r.XID), Label: r.Label})
-		for _, y := range r.Follows {
-			g.AddEdge(Edge{GUID(r.XID), GUID(y.XID)})
-		}
-	}
-	return g
+	g := &Graph{}
+	add(g, r.Me)
+	return *g
 }
 
 type Resource struct {
