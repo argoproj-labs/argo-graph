@@ -38,7 +38,7 @@ func startHttpServer() {
 			panic(err)
 		}
 	})
-	addr := ":2746"
+	addr := ":5678"
 	go func() {
 		err := http.ListenAndServe(addr, nil)
 		if err != nil {

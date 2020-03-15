@@ -61,7 +61,7 @@ const config = {
         },
         proxy: {
             '/api': {
-                'target': isProd ? '' : 'http://localhost:2746',
+                'target': isProd ? '' : 'http://localhost:5678',
                 'secure': false,
             }
         }

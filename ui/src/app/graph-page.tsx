@@ -68,7 +68,7 @@ export class GraphPage extends React.Component<{}, Graph> {
                     <div className='columns small-12'>
                         <div className='graph' style={{margin: 40}}>
                             {g.nodes().map((id) => g.node(id)).map((n) => <>
-                                <div style={{
+                                <div key={`vertex-${n.label}`} style={{
                                     position: "absolute",
                                     left: n.x - vertexSize / 2,
                                     top: n.y - vertexSize / 2,
@@ -78,7 +78,7 @@ export class GraphPage extends React.Component<{}, Graph> {
                                     backgroundColor: "purple",
                                     border: "1px solid #888"
                                 }}/>
-                                <div style={{
+                                <div key={`label-${n.label}`} style={{
                                     position: "absolute",
                                     left: n.x - ranksep / 2,
                                     top: n.y + vertexSize / 2,
@@ -90,7 +90,7 @@ export class GraphPage extends React.Component<{}, Graph> {
                                 }}>{n.label}</div>
                             </>)}
                             {edges.map(edge => (
-                                <div key={`${edge.from}-${edge.to}`}>
+                                <div key={`edge-${edge.from}-${edge.to}`}>
                                     {edge.lines.map((line, i) => {
                                         const distance = Math.sqrt(Math.pow(line.x1 - line.x2, 2) + Math.pow(line.y1 - line.y2, 2));
                                         const xMid = (line.x1 + line.x2) / 2;
@@ -98,7 +98,7 @@ export class GraphPage extends React.Component<{}, Graph> {
                                         const angle = (Math.atan2(line.y1 - line.y2, line.x1 - line.x2) * 180) / Math.PI;
                                         return (
                                             <div
-                                                key={i}
+                                                key={`line-${edge.from}-${edge.to}-${i}`}
                                                 style={{
                                                     position: "absolute",
                                                     width: distance,
