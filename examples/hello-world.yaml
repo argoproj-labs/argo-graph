@@ -45,17 +45,13 @@ spec:
       image: cowsay:v1
 ---
 apiVersion: v1
-kind: Pod
+kind: ConfigMap
 metadata:
   name: lwilson
   labels:
     argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/edges: "///hford"
-spec:
-  containers:
-    - name: main
-      image: cowsay:v1
+    argoproj.io/edges: "//pods/hford"
 ---
 apiVersion: v1
 kind: Pod
@@ -64,7 +60,7 @@ metadata:
   labels:
     argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/edges: "///swilliams,///bpitt,///lwilson"
+    argoproj.io/edges: "///swilliams,///bpitt,//configmaps/lwilson"
 spec:
   containers:
     - name: main

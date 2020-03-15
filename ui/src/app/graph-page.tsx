@@ -29,7 +29,7 @@ export class GraphPage extends React.Component<{}, Graph> {
     }
 
     componentDidMount() {
-        request.get("/api/graph")
+        request.get("/api/v1/graph")
             .then((r: { text: string }) => {
                 this.setState(JSON.parse(r.text) as Graph);
             })
@@ -37,12 +37,12 @@ export class GraphPage extends React.Component<{}, Graph> {
     }
 
     public render() {
+        const vertexSize = 32;
+        const ranksep = 100;
         const g = new dagre.graphlib.Graph();
-        g.setGraph({rankdir: "LR"});
-        g.setDefaultEdgeLabel(function () {
-            return {};
-        });
-        (this.state.vertices || []).forEach(v => g.setNode(v, {label: v, width: 100, height: 20}));
+        g.setGraph({rankdir: "LR", "ranksep": ranksep});
+        g.setDefaultEdgeLabel(() => ({}));
+        (this.state.vertices || []).forEach(v => g.setNode(v, {label: v, width: vertexSize, height: vertexSize}));
         (this.state.edges || []).forEach(e => g.setEdge(e.x, e.y));
         dagre.layout(g);
         const edges: { from: string; to: string; lines: Line[] }[] = [];
@@ -66,17 +66,29 @@ export class GraphPage extends React.Component<{}, Graph> {
             <Page title='Argo Graph'>
                 <div className='row'>
                     <div className='columns small-12'>
-                        <div className='graph'>
-                            {g.nodes().map((id) => g.node(id)).map((n) => <div key={n.label} style={{
-                                position: "absolute",
-                                left: n.x - n.width / 2,
-                                top: n.y - n.height / 2,
-                                width: n.width,
-                                height: n.height,
-                                lineHeight: n.height + "px",
-                                borderRadius: n.width / 2,
-                                textAlign: "center"
-                            }}>{n.label}</div>)}
+                        <div className='graph' style={{margin: 40}}>
+                            {g.nodes().map((id) => g.node(id)).map((n) => <>
+                                <div style={{
+                                    position: "absolute",
+                                    left: n.x - vertexSize / 2,
+                                    top: n.y - vertexSize / 2,
+                                    width: vertexSize,
+                                    height: vertexSize,
+                                    borderRadius: vertexSize / 2,
+                                    backgroundColor: "purple",
+                                    border: "1px solid #888"
+                                }}/>
+                                <div style={{
+                                    position: "absolute",
+                                    left: n.x - ranksep / 2,
+                                    top: n.y + vertexSize / 2,
+                                    width: ranksep,
+                                    textAlign: "center",
+                                    fontSize: "0.75em",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis"
+                                }}>{n.label}</div>
+                            </>)}
                             {edges.map(edge => (
                                 <div key={`${edge.from}-${edge.to}`}>
                                     {edge.lines.map((line, i) => {
