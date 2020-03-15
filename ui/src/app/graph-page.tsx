@@ -1,23 +1,11 @@
 import * as React from 'react';
 import * as dagre from 'dagre';
 import {Page} from "argo-ui/src/index";
+import {Graph, Vertex} from "./types";
 
 const request = require('superagent');
 require('./graph.scss');
-interface Vertex {
-    guid: string;
-    label: string;
-}
 
-interface Graph {
-    vertices?: Vertex[];
-    edges?: Edge[];
-}
-
-interface Edge {
-    x: string;
-    y: string;
-}
 
 interface Line {
     x1: number;
@@ -48,6 +36,7 @@ export class GraphPage extends React.Component<{}, Graph> {
         g.setGraph({rankdir: "LR", "ranksep": ranksep});
         g.setDefaultEdgeLabel(() => ({}));
         (this.state.vertices || []).forEach(v => g.setNode(v.guid, {
+            kind: Vertex.getKind(v),
             label: v.label,
             width: vertexSize,
             height: vertexSize
@@ -89,8 +78,10 @@ export class GraphPage extends React.Component<{}, Graph> {
                             height: vertexSize,
                             borderRadius: vertexSize / 2,
                             backgroundColor: "#eee",
-                            border: "1px solid #888"
-                        }}/>
+                            border: "1px solid #888",
+                            textAlign: "center",
+                            lineHeight: vertexSize + "px"
+                        }}>{n.kind.substring(0, 1).toUpperCase()}</div>
                         <div key={`label-${n.label}`} style={{
                             position: "absolute",
                             left: left + n.x - ranksep / 2,

@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -53,6 +54,10 @@ func startWatches(ctx context.Context) {
 	if err != nil {
 		panic(err)
 	}
+	startWatchingCluster(ctx, config)
+}
+
+func startWatchingCluster(ctx context.Context, config *rest.Config) {
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err)
@@ -95,7 +100,7 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 		case event, ok := <-w.ResultChan():
 			if ok && event.Type == watch.Added {
 				obj := event.Object.(*unstructured.Unstructured)
-				y := GUID(obj.GetClusterName() + "/" + obj.GetNamespace() + "/" + kind + "/" + obj.GetName())
+				y := NewGUID(obj.GetClusterName(), obj.GetNamespace(), kind, obj.GetName())
 				label, ok := obj.GetAnnotations()["argoproj.io/vertex-label"]
 				if !ok {
 					label = obj.GetName()
@@ -118,7 +123,7 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 						if parts[2] == "" {
 							parts[2] = kind
 						}
-						x := GUID(parts[0] + "/" + parts[1] + "/" + parts[2] + "/" + parts[3])
+						x := NewGUID(parts[0], parts[1], parts[2], parts[3])
 						e := Edge{x, y}
 						graph.AddEdge(e)
 						log.Infof("%v", e)
