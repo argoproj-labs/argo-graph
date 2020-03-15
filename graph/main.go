@@ -23,9 +23,18 @@ var graph = Graph{}
 
 func main() {
 	ctx := context.Background()
-	startWatches(ctx)
+	configs := getClusterConfigs()
+	startWatchingClusters(ctx, configs...)
 	startHttpServer()
 	<-ctx.Done()
+}
+
+func getClusterConfigs() []*rest.Config {
+	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), &clientcmd.ConfigOverrides{}).ClientConfig()
+	if err != nil {
+		panic(err)
+	}
+	return []*rest.Config{config}
 }
 
 func startHttpServer() {
@@ -49,12 +58,10 @@ func startHttpServer() {
 	log.WithFields(log.Fields{"addr": addr}).Info("started")
 }
 
-func startWatches(ctx context.Context) {
-	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), &clientcmd.ConfigOverrides{}).ClientConfig()
-	if err != nil {
-		panic(err)
+func startWatchingClusters(ctx context.Context, configs ...*rest.Config) {
+	for _, c := range configs {
+		startWatchingCluster(ctx, c)
 	}
-	startWatchingCluster(ctx, config)
 }
 
 func startWatchingCluster(ctx context.Context, config *rest.Config) {
