@@ -16,75 +16,63 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var ServerCommand = &cobra.Command{
 	Use: "server",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		configs := getClusterConfigs()
-		startWatchingClusters(ctx, configs...)
+		startWatchingClusters(ctx)
 		startHttpServer()
 		<-ctx.Done()
 	},
 }
 
-func getClusterConfigs() []*rest.Config {
-	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), &clientcmd.ConfigOverrides{}).ClientConfig()
-	if err != nil {
-		panic(err)
+func getClusterConfigs() map[string]*rest.Config {
+	secrets, err := getKubernetes().CoreV1().Secrets(namespace).Get(clustersSecretName, metav1.GetOptions{})
+	checkError(err)
+	configs := map[string]*rest.Config{}
+	for name, bytes := range secrets.Data {
+		r := &RestConfig{}
+		err := json.Unmarshal(bytes, r)
+		checkError(err)
+		configs[name] = r.RestConfig()
 	}
-
-	return []*rest.Config{config}
+	return configs
 }
 
 func startHttpServer() {
 	http.HandleFunc("/api/v1/graph", func(w http.ResponseWriter, r *http.Request) {
 		marshal, err := json.Marshal(graph)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 		_, err = w.Write(marshal)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 	})
 	http.Handle("/", Server)
 	addr := ":5678"
 	go func() {
-		err := http.ListenAndServe(addr, nil)
-		if err != nil {
-			panic(err)
-		}
+		checkError(http.ListenAndServe(addr, nil))
 	}()
 	log.WithFields(log.Fields{"addr": addr}).Info("started server")
 }
 
-func startWatchingClusters(ctx context.Context, configs ...*rest.Config) {
-	for _, c := range configs {
-		startWatchingCluster(ctx, c)
+func startWatchingClusters(ctx context.Context) {
+	for clusterName, c := range getClusterConfigs() {
+		startWatchingCluster(ctx, clusterName, c)
 	}
 }
 
-func startWatchingCluster(ctx context.Context, config *rest.Config) {
+func startWatchingCluster(ctx context.Context, clusterName string, config *rest.Config) {
+	log.WithFields(log.Fields{"clusterName": clusterName}).Info("starting watching cluster")
 	client, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 	resources, err := client.Discovery().ServerPreferredResources()
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 	d, err := dynamic.NewForConfig(config)
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 	for _, list := range resources {
 		gv, err := schema.ParseGroupVersion(list.GroupVersion)
-		if err != nil {
-			panic(err)
-		}
+		checkError(err)
 		for _, r := range list.APIResources {
 			subject := schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: r.Name}
 			go watchResources(ctx, d.Resource(subject), subject, r.Name)
@@ -98,9 +86,7 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 		log.WithField("subject", subject).Info(err)
 		return
 	}
-	if err != nil {
-		panic(err)
-	}
+	checkError(err)
 	defer w.Stop()
 	log.WithField("subject", subject).Info("started watch")
 	for {
