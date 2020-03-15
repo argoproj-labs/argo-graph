@@ -5,7 +5,8 @@ import "fmt"
 // https: //en.wikipedia.org/wiki/Graph_(discrete_mathematics)
 type GUID string
 type Vertex struct {
-	GUID GUID `json:"guid"`
+	GUID  GUID   `json:"guid"`
+	Label string `json:"label"`
 }
 type Edge struct {
 	X GUID `json:"x"`

@@ -96,7 +96,11 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 			if ok && event.Type == watch.Added {
 				obj := event.Object.(*unstructured.Unstructured)
 				y := GUID(obj.GetClusterName() + "/" + obj.GetNamespace() + "/" + kind + "/" + obj.GetName())
-				graph.AddVertex(Vertex{GUID: y})
+				label, ok := obj.GetAnnotations()["argoproj.io/vertex-label"]
+				if !ok {
+					label = obj.GetName()
+				}
+				graph.AddVertex(Vertex{GUID: y, Label: label})
 				edges, ok := obj.GetAnnotations()["argoproj.io/edges"]
 				if ok {
 					for _, id := range strings.Split(edges, ",") {

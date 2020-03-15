@@ -6,6 +6,7 @@ const request = require('superagent');
 require('./graph.scss');
 interface Vertex {
     guid: string;
+    label: string;
 }
 
 interface Graph {
@@ -47,7 +48,7 @@ export class GraphPage extends React.Component<{}, Graph> {
         g.setGraph({rankdir: "LR", "ranksep": ranksep});
         g.setDefaultEdgeLabel(() => ({}));
         (this.state.vertices || []).forEach(v => g.setNode(v.guid, {
-            label: v.guid,
+            label: v.label,
             width: vertexSize,
             height: vertexSize
         }));
