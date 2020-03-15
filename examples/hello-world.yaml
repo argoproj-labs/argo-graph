@@ -3,9 +3,9 @@ kind: Pod
 metadata:
   name: kspacey
   labels:
-    argoproj.io/vertex: "true"
+    graph.argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/vertex-label: Kevin Spacey
+    graph.argoproj.io/vertex-label: Kevin Spacey
 spec:
   containers:
     - name: main
@@ -16,10 +16,10 @@ kind: Pod
 metadata:
   name: swilliams
   labels:
-    argoproj.io/vertex: "true"
+    graph.argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/edges: "///kspacey"
-    argoproj.io/vertex-label: Saul Williams
+    graph.argoproj.io/edges: "///kspacey"
+    graph.argoproj.io/vertex-label: Saul Williams
 spec:
   containers:
     - name: main
@@ -30,9 +30,9 @@ kind: Pod
 metadata:
   name: bpitt
   labels:
-    argoproj.io/vertex: "true"
+    graph.argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/vertex-label: Brad Pitt
+    graph.argoproj.io/vertex-label: Brad Pitt
 spec:
   containers:
     - name: main
@@ -43,9 +43,9 @@ kind: Pod
 metadata:
   name: hford
   labels:
-    argoproj.io/vertex: "true"
+    graph.argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/vertex-label: Harrison Ford
+    graph.argoproj.io/vertex-label: Harrison Ford
 spec:
   containers:
     - name: main
@@ -56,20 +56,20 @@ kind: ConfigMap
 metadata:
   name: lwilson
   labels:
-    argoproj.io/vertex: "true"
+    graph.argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/edges: "//pods/hford"
-    argoproj.io/vertex-label: Luke Wilson
+    graph.argoproj.io/edges: "//pods/hford"
+    graph.argoproj.io/vertex-label: Luke Wilson
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: kbacon
   labels:
-    argoproj.io/vertex: "true"
+    graph.argoproj.io/vertex: "true"
   annotations:
-    argoproj.io/edges: "///swilliams,///bpitt,//configmaps/lwilson"
-    argoproj.io/vertex-label: Kevin Bacon
+    graph.argoproj.io/edges: "///swilliams,///bpitt,//configmaps/lwilson"
+    graph.argoproj.io/vertex-label: Kevin Bacon
 spec:
   containers:
     - name: main

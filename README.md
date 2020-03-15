@@ -25,6 +25,13 @@ go run ./cmd cluster add other
 kubectl get secret clusters -o yaml ;# should show your cluster
 ```
 
+Start database
+
+```
+docker run --rm -it -p 7000:7000 -p 7080:7080 -p 9080:9080 dgraph/standalone:latest
+```
+
+Start server:
 
 ```
 make start
@@ -36,8 +43,8 @@ In a new terminal:
 export KUBECONFIG=$(k3d get-kubeconfig):$(k3d get-kubeconfig --name other)
 kubectx other
 kubens default
-kubectl delete pod -l argoproj.io/vertex
-kubectl delete svc -l argoproj.io/vertex
+kubectl delete pod -l graph.argoproj.io/vertex
+kubectl delete cm -l graph.argoproj.io/vertex
 kubectl apply -f examples/hello-world.yaml
 ```
 

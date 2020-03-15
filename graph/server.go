@@ -23,7 +23,7 @@ var ServerCommand = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		startWatchingClusters(ctx)
-		startHttpServer()
+		startHttpServer(ctx)
 		<-ctx.Done()
 	},
 }
@@ -41,9 +41,9 @@ func getClusterConfigs() map[string]*rest.Config {
 	return configs
 }
 
-func startHttpServer() {
+func startHttpServer(ctx context.Context) {
 	http.HandleFunc("/api/v1/graph", func(w http.ResponseWriter, r *http.Request) {
-		marshal, err := json.Marshal(graph)
+		marshal, err := json.Marshal(db.GetGraph(ctx))
 		checkError(err)
 		_, err = w.Write(marshal)
 		checkError(err)
@@ -60,6 +60,8 @@ func startWatchingClusters(ctx context.Context) {
 	for clusterName, c := range getClusterConfigs() {
 		startWatchingCluster(ctx, clusterName, c)
 	}
+
+	log.Info("cluster watches started")
 }
 
 func startWatchingCluster(ctx context.Context, clusterName string, config *rest.Config) {
@@ -81,7 +83,7 @@ func startWatchingCluster(ctx context.Context, clusterName string, config *rest.
 }
 
 func watchResources(ctx context.Context, resource dynamic.ResourceInterface, subject schema.GroupVersionResource, kind string) {
-	w, err := resource.Watch(metav1.ListOptions{LabelSelector: "argoproj.io/vertex"})
+	w, err := resource.Watch(metav1.ListOptions{LabelSelector: "graph.argoproj.io/vertex"})
 	if errors.IsNotFound(err) || errors.IsMethodNotSupported(err) {
 		log.WithField("subject", subject).Info(err)
 		return
@@ -96,18 +98,18 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 		case event, ok := <-w.ResultChan():
 			if ok && event.Type == watch.Added {
 				obj := event.Object.(*unstructured.Unstructured)
-				y := NewGUID(obj.GetClusterName(), obj.GetNamespace(), kind, obj.GetName())
-				label, ok := obj.GetAnnotations()["argoproj.io/vertex-label"]
+				x := NewGUID(obj.GetClusterName(), obj.GetNamespace(), kind, obj.GetName())
+				label, ok := obj.GetAnnotations()["graph.argoproj.io/vertex-label"]
 				if !ok {
 					label = obj.GetName()
 				}
-				graph.AddVertex(Vertex{GUID: y, Label: label})
-				edges, ok := obj.GetAnnotations()["argoproj.io/edges"]
+				db.AddVertex(ctx, Vertex{GUID: x, Label: label})
+				edges, ok := obj.GetAnnotations()["graph.argoproj.io/edges"]
 				if ok {
 					for _, id := range strings.Split(edges, ",") {
 						parts := strings.SplitN(id, "/", 4)
 						if len(parts) != 4 {
-							log.WithFields(log.Fields{"y": y, "x": id}).Errorf("expected 4 fields")
+							log.WithFields(log.Fields{"x": x, "y": id}).Errorf("expected 4 fields")
 							continue
 						}
 						if parts[0] == "" {
@@ -119,13 +121,14 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 						if parts[2] == "" {
 							parts[2] = kind
 						}
-						x := NewGUID(parts[0], parts[1], parts[2], parts[3])
+						y := NewGUID(parts[0], parts[1], parts[2], parts[3])
+						db.AddVertex(ctx, Vertex{GUID: y})
 						e := Edge{x, y}
-						graph.AddEdge(e)
+						db.AddEdge(ctx, e)
 						log.Infof("%v", e)
 					}
 				} else {
-					log.WithField("y", y).Info("no inbound edges")
+					log.WithField("x", x).Info("no inbound edges")
 				}
 			}
 		}
