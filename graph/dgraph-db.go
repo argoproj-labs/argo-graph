@@ -69,16 +69,21 @@ func add(g *Graph, rs []Resource) {
 		for _, y := range r.Follows {
 			g.AddEdge(Edge{GUID(r.XID), GUID(y.XID)})
 		}
+		for _, y := range r.Followers {
+			g.AddEdge(Edge{GUID(y.XID), GUID(r.XID)})
+		}
 		add(g, r.Follows)
+		add(g, r.Followers)
 	}
 }
 
 func (d *dgraphDB) GetGraph(ctx context.Context, guid GUID) Graph {
 	resp, err := d.dg.NewTxn().Query(ctx, fmt.Sprintf(`query Me(){
-	me(func: eq(xid, "%s"))  @recurse(depth: 4){
+	me(func: eq(xid, "%s")) @recurse(depth: 3){
         xid
         label
         follows
+        followers: ~follows
     }
 }`, guid))
 	checkError(err)
@@ -93,10 +98,11 @@ func (d *dgraphDB) GetGraph(ctx context.Context, guid GUID) Graph {
 }
 
 type Resource struct {
-	UID     string     `json:"uid,omitempty"`
-	XID     string     `json:"xid,omitempty"`
-	Label   string     `json:"label,omitempty"`
-	Follows []Resource `json:"follows,omitempty"`
+	UID       string     `json:"uid,omitempty"`
+	XID       string     `json:"xid,omitempty"`
+	Label     string     `json:"label,omitempty"`
+	Follows   []Resource `json:"follows,omitempty"`
+	Followers []Resource `json:"followers,omitempty"`
 }
 
 func NewDB(dropSchema bool) DB {
@@ -114,7 +120,7 @@ func NewDB(dropSchema bool) DB {
 	err = dg.Alter(ctx, &api.Operation{Schema: `
 	xid: string @index(exact) @upsert .
 	label: string .
-    follows: [uid] .
+    follows: [uid] @reverse .
 
 type Resource {
   xid

@@ -33,7 +33,7 @@ export class GraphPage extends React.Component<{ guid: string }, Graph> {
         const nodeSize = 32;
         const ranksep = 100;
         const g = new dagre.graphlib.Graph();
-        g.setGraph({rankdir: "LR", "ranksep": ranksep});
+        g.setGraph({rankdir: "RL", "ranksep": ranksep});
         g.setDefaultEdgeLabel(() => ({}));
         (this.state.nodes || []).forEach(v => g.setNode(v.guid, {
             kind: Node.getKind(v),
@@ -75,6 +75,7 @@ export class GraphPage extends React.Component<{ guid: string }, Graph> {
                     }
                     {nodes.map((n: any) => <>
                         <a key={`node-${n.id}`}
+                           className='node'
                            href={`/graph/${n.id}`}
                            style={{
                                position: "absolute",
@@ -84,9 +85,10 @@ export class GraphPage extends React.Component<{ guid: string }, Graph> {
                                height: nodeSize,
                                borderRadius: nodeSize / 2,
                                backgroundColor: "#eee",
-                               border: "1px solid #888",
+                               border: (n.id == this.props.guid ? 2 : 1) + "px solid #888",
                                textAlign: "center",
-                               lineHeight: nodeSize + "px"
+                               lineHeight: nodeSize + "px",
+                               fontWeight: n.id == this.props.guid ? "bold" : "normal",
                            }}>{n.kind.substring(0, 1).toUpperCase()}</a>
                         <div key={`label-${n.label}`} style={{
                             position: "absolute",
