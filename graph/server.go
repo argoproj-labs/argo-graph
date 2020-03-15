@@ -18,14 +18,21 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+var dropSchema = false
+
 var ServerCommand = &cobra.Command{
 	Use: "server",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
-		startWatchingClusters(ctx)
-		startHttpServer(ctx)
+		db := NewDB(dropSchema)
+		startWatchingClusters(ctx, db)
+		startHttpServer(ctx, db)
 		<-ctx.Done()
 	},
+}
+
+func init() {
+	ServerCommand.Flags().BoolVar(&dropSchema, "--drop-schema", false, "Drop the schema on start")
 }
 
 func getClusterConfigs() map[string]*rest.Config {
@@ -41,8 +48,8 @@ func getClusterConfigs() map[string]*rest.Config {
 	return configs
 }
 
-func startHttpServer(ctx context.Context) {
-	http.HandleFunc("/api/v1/graph", func(w http.ResponseWriter, r *http.Request) {
+func startHttpServer(ctx context.Context, db DB) {
+	http.HandleFunc("/api/v1/graph/", func(w http.ResponseWriter, r *http.Request) {
 		marshal, err := json.Marshal(db.GetGraph(ctx))
 		checkError(err)
 		_, err = w.Write(marshal)
@@ -56,15 +63,15 @@ func startHttpServer(ctx context.Context) {
 	log.WithFields(log.Fields{"addr": addr}).Info("started server")
 }
 
-func startWatchingClusters(ctx context.Context) {
+func startWatchingClusters(ctx context.Context, db DB) {
 	for clusterName, c := range getClusterConfigs() {
-		startWatchingCluster(ctx, clusterName, c)
+		startWatchingCluster(ctx, clusterName, c, db)
 	}
 
 	log.Info("cluster watches started")
 }
 
-func startWatchingCluster(ctx context.Context, clusterName string, config *rest.Config) {
+func startWatchingCluster(ctx context.Context, clusterName string, config *rest.Config, db DB) {
 	log.WithFields(log.Fields{"clusterName": clusterName}).Info("starting watching cluster")
 	client, err := kubernetes.NewForConfig(config)
 	checkError(err)
@@ -77,13 +84,13 @@ func startWatchingCluster(ctx context.Context, clusterName string, config *rest.
 		checkError(err)
 		for _, r := range list.APIResources {
 			subject := schema.GroupVersionResource{Group: gv.Group, Version: gv.Version, Resource: r.Name}
-			go watchResources(ctx, d.Resource(subject), subject, r.Name)
+			go watchResources(ctx, d.Resource(subject), subject, r.Name, db)
 		}
 	}
 }
 
-func watchResources(ctx context.Context, resource dynamic.ResourceInterface, subject schema.GroupVersionResource, kind string) {
-	w, err := resource.Watch(metav1.ListOptions{LabelSelector: "graph.argoproj.io/vertex"})
+func watchResources(ctx context.Context, resource dynamic.ResourceInterface, subject schema.GroupVersionResource, kind string, db DB) {
+	w, err := resource.Watch(metav1.ListOptions{LabelSelector: "graph.argoproj.io/node"})
 	if errors.IsNotFound(err) || errors.IsMethodNotSupported(err) {
 		log.WithField("subject", subject).Info(err)
 		return
@@ -99,11 +106,11 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 			if ok && event.Type == watch.Added {
 				obj := event.Object.(*unstructured.Unstructured)
 				x := NewGUID(obj.GetClusterName(), obj.GetNamespace(), kind, obj.GetName())
-				label, ok := obj.GetAnnotations()["graph.argoproj.io/vertex-label"]
+				label, ok := obj.GetAnnotations()["graph.argoproj.io/node-label"]
 				if !ok {
 					label = obj.GetName()
 				}
-				db.AddVertex(ctx, Vertex{GUID: x, Label: label})
+				db.AddNode(ctx, Node{GUID: x, Label: label})
 				edges, ok := obj.GetAnnotations()["graph.argoproj.io/edges"]
 				if ok {
 					for _, id := range strings.Split(edges, ",") {
@@ -122,7 +129,7 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 							parts[2] = kind
 						}
 						y := NewGUID(parts[0], parts[1], parts[2], parts[3])
-						db.AddVertex(ctx, Vertex{GUID: y})
+						db.AddNode(ctx, Node{GUID: y})
 						e := Edge{x, y}
 						db.AddEdge(ctx, e)
 						log.Infof("%v", e)

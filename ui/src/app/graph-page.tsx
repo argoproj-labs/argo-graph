@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as dagre from 'dagre';
 import {Page} from "argo-ui/src/index";
-import {Graph, Vertex} from "./types";
+import {Graph, Node} from "./types";
 
 const request = require('superagent');
 require('./graph.scss');
@@ -30,16 +30,16 @@ export class GraphPage extends React.Component<{}, Graph> {
     }
 
     public render() {
-        const vertexSize = 32;
+        const nodeSize = 32;
         const ranksep = 100;
         const g = new dagre.graphlib.Graph();
         g.setGraph({rankdir: "LR", "ranksep": ranksep});
         g.setDefaultEdgeLabel(() => ({}));
-        (this.state.vertices || []).forEach(v => g.setNode(v.guid, {
-            kind: Vertex.getKind(v),
+        (this.state.nodes || []).forEach(v => g.setNode(v.guid, {
+            kind: Node.getKind(v),
             label: v.label,
-            width: vertexSize,
-            height: vertexSize
+            width: nodeSize,
+            height: nodeSize
         }));
         (this.state.edges || []).forEach(e => g.setEdge(e.x, e.y));
         dagre.layout(g);
@@ -61,8 +61,8 @@ export class GraphPage extends React.Component<{}, Graph> {
         });
 
         const nodes = g.nodes().map((id) => g.node(id));
-        const left = vertexSize * 2;
-        const top = vertexSize * 2;
+        const left = nodeSize * 2;
+        const top = nodeSize * 2;
         const width = nodes.map(n => n.x + n.width).reduce((l, r) => Math.max(l, r), 0) + left * 2;
         const height = nodes.map(n => n.y + n.height).reduce((l, r) => Math.max(l, r), 0) + top * 2;
 
@@ -70,22 +70,22 @@ export class GraphPage extends React.Component<{}, Graph> {
             <Page title='Argo Graph'>
                 <div className='graph' style={{paddingLeft: 20, width: width, height: height}}>
                     {nodes.map((n) => <>
-                        <div key={`vertex-${n.label}`} style={{
+                        <div key={`node-${n.label}`} style={{
                             position: "absolute",
-                            left: left + n.x - vertexSize / 2,
-                            top: top + n.y - vertexSize / 2,
-                            width: vertexSize,
-                            height: vertexSize,
-                            borderRadius: vertexSize / 2,
+                            left: left + n.x - nodeSize / 2,
+                            top: top + n.y - nodeSize / 2,
+                            width: nodeSize,
+                            height: nodeSize,
+                            borderRadius: nodeSize / 2,
                             backgroundColor: "#eee",
                             border: "1px solid #888",
                             textAlign: "center",
-                            lineHeight: vertexSize + "px"
+                            lineHeight: nodeSize + "px"
                         }}>{n.kind.substring(0, 1).toUpperCase()}</div>
                         <div key={`label-${n.label}`} style={{
                             position: "absolute",
                             left: left + n.x - ranksep / 2,
-                            top: top + n.y + vertexSize / 2,
+                            top: top + n.y + nodeSize / 2,
                             width: ranksep,
                             textAlign: "center",
                             fontSize: "0.75em",

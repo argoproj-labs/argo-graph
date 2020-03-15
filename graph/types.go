@@ -12,16 +12,16 @@ func NewGUID(cluster, namespace, kind, name string) GUID {
 	return GUID(cluster + "/" + namespace + "/" + kind + "/" + name)
 }
 
-type Vertex struct {
+type Node struct {
 	GUID  GUID   `json:"guid"`
 	Label string `json:"label"`
 }
 
-func (v Vertex) GetKind() string {
+func (v Node) GetKind() string {
 	return v.parts()[2]
 }
 
-func (v Vertex) parts() []string {
+func (v Node) parts() []string {
 	return strings.SplitN(string(v.GUID), "/", 4)
 }
 
@@ -34,15 +34,15 @@ func (e Edge) String() string {
 	return fmt.Sprintf("%s -> %s", e.X, e.Y)
 }
 
-type Vertices []Vertex
+type Nodes []Node
 type Edges []Edge
 type Graph struct {
-	Vertices `json:"vertices"`
-	Edges    `json:"edges"`
+	Nodes `json:"nodes"`
+	Edges `json:"edges"`
 }
 
-func (g *Graph) AddVertex(v Vertex) {
-	g.Vertices = append(g.Vertices, v)
+func (g *Graph) AddNode(v Node) {
+	g.Nodes = append(g.Nodes, v)
 }
 
 func (g *Graph) AddEdge(e Edge) {

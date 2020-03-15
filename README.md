@@ -43,8 +43,8 @@ In a new terminal:
 export KUBECONFIG=$(k3d get-kubeconfig):$(k3d get-kubeconfig --name other)
 kubectx other
 kubens default
-kubectl delete pod -l graph.argoproj.io/vertex
-kubectl delete cm -l graph.argoproj.io/vertex
+kubectl delete pod -l graph.argoproj.io/node
+kubectl delete cm -l graph.argoproj.io/node
 kubectl apply -f examples/hello-world.yaml
 ```
 

@@ -1,15 +1,15 @@
-export class Vertex {
-    static getKind: (v: Vertex) => string;
+export class Node {
+    static getKind: (v: Node) => string;
     guid: string;
     label: string;
 }
 
-Vertex.getKind = (v: Vertex) => {
+Node.getKind = (v: Node) => {
     return v.guid.split("/")[2];
 };
 
 export interface Graph {
-    vertices?: Vertex[];
+    nodes?: Node[];
     edges?: Edge[];
 }
 
