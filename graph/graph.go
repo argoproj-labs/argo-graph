@@ -3,10 +3,13 @@ package main
 import "fmt"
 
 // https: //en.wikipedia.org/wiki/Graph_(discrete_mathematics)
-type Vertex string
+type GUID string
+type Vertex struct {
+	GUID GUID `json:"guid"`
+}
 type Edge struct {
-	X Vertex `json:"x"`
-	Y Vertex `json:"y"`
+	X GUID `json:"x"`
+	Y GUID `json:"y"`
 }
 
 func (e Edge) String() string {

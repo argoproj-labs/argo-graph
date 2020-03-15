@@ -4,9 +4,12 @@ import {Page} from "argo-ui/src/index";
 
 const request = require('superagent');
 require('./graph.scss');
+interface Vertex {
+    guid: string;
+}
 
 interface Graph {
-    vertices?: string[];
+    vertices?: Vertex[];
     edges?: Edge[];
 }
 
@@ -43,7 +46,11 @@ export class GraphPage extends React.Component<{}, Graph> {
         const g = new dagre.graphlib.Graph();
         g.setGraph({rankdir: "LR", "ranksep": ranksep});
         g.setDefaultEdgeLabel(() => ({}));
-        (this.state.vertices || []).forEach(v => g.setNode(v, {label: v, width: vertexSize, height: vertexSize}));
+        (this.state.vertices || []).forEach(v => g.setNode(v.guid, {
+            label: v.guid,
+            width: vertexSize,
+            height: vertexSize
+        }));
         (this.state.edges || []).forEach(e => g.setEdge(e.x, e.y));
         dagre.layout(g);
         const edges: { from: string; to: string; lines: Line[] }[] = [];

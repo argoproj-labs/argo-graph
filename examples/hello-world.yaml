@@ -4,6 +4,8 @@ metadata:
   name: kspacey
   labels:
     argoproj.io/vertex: "true"
+  annotations:
+    argoproj.io/vertex-label: Kevin Spacey
 spec:
   containers:
     - name: main
@@ -17,6 +19,7 @@ metadata:
     argoproj.io/vertex: "true"
   annotations:
     argoproj.io/edges: "///kspacey"
+    argoproj.io/vertex-label: Saul Williams
 spec:
   containers:
     - name: main
@@ -28,6 +31,8 @@ metadata:
   name: bpitt
   labels:
     argoproj.io/vertex: "true"
+  annotations:
+    argoproj.io/vertex-label: Brad Pitt
 spec:
   containers:
     - name: main
@@ -39,6 +44,8 @@ metadata:
   name: hford
   labels:
     argoproj.io/vertex: "true"
+  annotations:
+    argoproj.io/vertex-label: Harrison Ford
 spec:
   containers:
     - name: main
@@ -52,6 +59,7 @@ metadata:
     argoproj.io/vertex: "true"
   annotations:
     argoproj.io/edges: "//pods/hford"
+    argoproj.io/vertex-label: Luke Wilson
 ---
 apiVersion: v1
 kind: Pod
@@ -61,6 +69,7 @@ metadata:
     argoproj.io/vertex: "true"
   annotations:
     argoproj.io/edges: "///swilliams,///bpitt,//configmaps/lwilson"
+    argoproj.io/vertex-label: Kevin Bacon
 spec:
   containers:
     - name: main

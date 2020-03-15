@@ -95,8 +95,8 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 		case event, ok := <-w.ResultChan():
 			if ok && event.Type == watch.Added {
 				obj := event.Object.(*unstructured.Unstructured)
-				y := Vertex(obj.GetClusterName() + "/" + obj.GetNamespace() + "/" + kind + "/" + obj.GetName())
-				graph.AddVertex(y)
+				y := GUID(obj.GetClusterName() + "/" + obj.GetNamespace() + "/" + kind + "/" + obj.GetName())
+				graph.AddVertex(Vertex{GUID: y})
 				edges, ok := obj.GetAnnotations()["argoproj.io/edges"]
 				if ok {
 					for _, id := range strings.Split(edges, ",") {
@@ -114,7 +114,7 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 						if parts[2] == "" {
 							parts[2] = kind
 						}
-						x := Vertex(parts[0] + "/" + parts[1] + "/" + parts[2] + "/" + parts[3])
+						x := GUID(parts[0] + "/" + parts[1] + "/" + parts[2] + "/" + parts[3])
 						e := Edge{x, y}
 						graph.AddEdge(e)
 						log.Infof("%v", e)
