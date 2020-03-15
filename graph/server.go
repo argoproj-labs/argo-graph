@@ -1,4 +1,4 @@
-package main
+package graph
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -18,15 +19,15 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-// https://rancher.com/using-kubernetes-api-go-kubecon-2017-session-recap
-var graph = Graph{}
-
-func main() {
-	ctx := context.Background()
-	configs := getClusterConfigs()
-	startWatchingClusters(ctx, configs...)
-	startHttpServer()
-	<-ctx.Done()
+var ServerCommand = &cobra.Command{
+	Use: "server",
+	Run: func(cmd *cobra.Command, args []string) {
+		ctx := context.Background()
+		configs := getClusterConfigs()
+		startWatchingClusters(ctx, configs...)
+		startHttpServer()
+		<-ctx.Done()
+	},
 }
 
 func getClusterConfigs() []*rest.Config {
@@ -34,6 +35,7 @@ func getClusterConfigs() []*rest.Config {
 	if err != nil {
 		panic(err)
 	}
+
 	return []*rest.Config{config}
 }
 
@@ -48,6 +50,7 @@ func startHttpServer() {
 			panic(err)
 		}
 	})
+	http.Handle("/", Server)
 	addr := ":5678"
 	go func() {
 		err := http.ListenAndServe(addr, nil)
@@ -55,7 +58,7 @@ func startHttpServer() {
 			panic(err)
 		}
 	}()
-	log.WithFields(log.Fields{"addr": addr}).Info("started")
+	log.WithFields(log.Fields{"addr": addr}).Info("started server")
 }
 
 func startWatchingClusters(ctx context.Context, configs ...*rest.Config) {

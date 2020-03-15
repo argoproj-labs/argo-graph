@@ -18,7 +18,8 @@
     "what-input": "^5.2.7"
   },
   "scripts": {
-    "start": "webpack-dev-server --config ./src/app/webpack.config.js"
+    "start": "webpack-dev-server --config ./src/app/webpack.config.js",
+    "build": "rm -rf dist && webpack --config ./src/app/webpack.config.js"
   },
   "devDependencies": {
     "@types/classnames": "^2.2.10",

@@ -1,4 +1,4 @@
-package main
+package graph
 
 import (
 	"fmt"
@@ -15,13 +15,6 @@ func NewGUID(cluster, namespace, kind, name string) GUID {
 type Vertex struct {
 	GUID  GUID   `json:"guid"`
 	Label string `json:"label"`
-}
-
-func NewVertex(cluster, namespace, kind, name, label string) Vertex {
-	return Vertex{
-		GUID:  NewGUID(cluster, namespace, kind, name),
-		Label: label,
-	}
 }
 
 func (v Vertex) GetKind() string {

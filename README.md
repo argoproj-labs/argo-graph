@@ -8,13 +8,14 @@ POC for graphing resources across clusters.
 
 ## Usage
 
+Create at least two clusters, one to run in, one or more to monitor,
+
 ```
-make start
+k3d create --name other --api-port 7443
 ```
 
 ```
-cd ui
-yarn start
+make start
 ```
 
 ```
@@ -23,8 +24,17 @@ kubectl delete svc -l argoproj.io/vertex
 kubectl apply -f examples/hello-world.yaml
 ```
 
-Open localhost:8080.
+Open localhost:5678.
 
+## Developer
+
+You probably want to run the UI:
+
+```
+yarn --cwd ui start
+```
+
+Open localhost:8080.
 
 ## Resources
 
