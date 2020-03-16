@@ -43,7 +43,7 @@ func init() {
 				secret.StringData[contextName] = string(marshal)
 				_, err = secrets.Update(secret)
 				checkError(err)
-				fmt.Printf(`added cluster context "%s"`, contextName)
+				fmt.Printf(`added cluster context "%s"\n`, contextName)
 			}
 		},
 	})

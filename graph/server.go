@@ -113,7 +113,7 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 		case <-ctx.Done():
 			return
 		case event, ok := <-w.ResultChan():
-			if ok && event.Type == watch.Added {
+			if ok && event.Type != watch.Deleted {
 				obj := event.Object.(*unstructured.Unstructured)
 				x := NewGUID(clusterName, obj.GetNamespace(), kind, obj.GetName())
 				label, ok := obj.GetAnnotations()["graph.argoproj.io/node-label"]

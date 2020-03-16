@@ -84,7 +84,7 @@ export class GraphPage extends React.Component<{ guid: string }, Graph> {
                                     height: nodeSize,
                                     borderRadius: nodeSize / 2,
                                     backgroundColor: '#eee',
-                                    border: (n.id == this.props.guid ? 2 : 1) + 'px solid #888',
+                                    border: '1px solid #888',
                                     textAlign: 'center',
                                     lineHeight: nodeSize + 'px',
                                     fontWeight: n.id == this.props.guid ? 'bold' : 'normal'
