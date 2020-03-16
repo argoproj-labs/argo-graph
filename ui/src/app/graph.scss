@@ -3,15 +3,14 @@
 }
 
 .line {
-  &:last-child {
-    &:after {
+  &:first-child {
+    &:before {
       content: '\25BA';
       position: absolute;
       color: #888;
       font-size: 12px;
       top: -9px;
       left: -1px;
-      transform: rotate(180deg);
     }
   }
 }
