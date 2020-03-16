@@ -16,21 +16,38 @@ type dgraphDB struct {
 	dg   *dgo.Dgraph
 }
 
-func (d *dgraphDB) getUID(ctx context.Context, xid GUID) string {
-	q := `query Me($xid: string){
-	me(func: eq(xid, $xid)) {
-		uid
+type Root struct {
+	Resources []Resource `json:"resources"`
+}
+
+func (d *dgraphDB) ListNodes(ctx context.Context) Nodes {
+	resp, err := d.dg.NewReadOnlyTxn().Query(ctx, `query Me(){
+	resources(func: has(xid)) {
+        xid
+        label
     }
-}`
-	resp, err := d.dg.NewTxn().QueryWithVars(ctx, q, map[string]string{"$xid": string(xid)})
+}`)
 	checkError(err)
-	type Root struct {
-		Me []Resource `json:"me"`
-	}
 	var r Root
 	checkError(json.Unmarshal(resp.Json, &r))
-	if len(r.Me) > 0 {
-		return r.Me[0].UID
+	nodes := make(Nodes, len(r.Resources))
+	for i, r := range r.Resources {
+		nodes[i] = Node{GUID: GUID(r.XID), Label: r.Label}
+	}
+	return nodes
+}
+
+func (d *dgraphDB) getUID(ctx context.Context, xid GUID) string {
+	resp, err := d.dg.NewTxn().QueryWithVars(ctx, `query Me($xid: string){
+	resources(func: eq(xid, $xid)) {
+		uid
+    }
+}`, map[string]string{"$xid": string(xid)})
+	checkError(err)
+	var r Root
+	checkError(json.Unmarshal(resp.Json, &r))
+	if len(r.Resources) > 0 {
+		return r.Resources[0].UID
 	}
 	return ""
 }
@@ -79,7 +96,7 @@ func add(g *Graph, rs []Resource) {
 
 func (d *dgraphDB) GetGraph(ctx context.Context, guid GUID) Graph {
 	resp, err := d.dg.NewTxn().Query(ctx, fmt.Sprintf(`query Me(){
-	me(func: eq(xid, "%s")) @recurse(depth: 3){
+	resources(func: eq(xid, "%s")) @recurse(depth: 3){
         xid
         label
         follows
@@ -87,13 +104,10 @@ func (d *dgraphDB) GetGraph(ctx context.Context, guid GUID) Graph {
     }
 }`, guid))
 	checkError(err)
-	type Root struct {
-		Me []Resource `json:"me"`
-	}
 	var r Root
 	checkError(json.Unmarshal(resp.Json, &r))
 	g := &Graph{}
-	add(g, r.Me)
+	add(g, r.Resources)
 	return *g
 }
 

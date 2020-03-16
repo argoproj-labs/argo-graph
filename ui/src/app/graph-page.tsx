@@ -1,11 +1,10 @@
 import * as React from 'react';
 import * as dagre from 'dagre';
-import {Page} from "argo-ui/src/index";
-import {Graph, Node} from "./types";
+import {Page} from 'argo-ui/src/index';
+import {Graph, Node} from './types';
 
 const request = require('superagent');
 require('./graph.scss');
-
 
 interface Line {
     x1: number;
@@ -15,17 +14,15 @@ interface Line {
 }
 
 export class GraphPage extends React.Component<{ guid: string }, Graph> {
-
     constructor(props: Readonly<{ guid: string }>) {
         super(props);
         this.state = {};
     }
 
     componentDidMount() {
-        request.get("/api/v1/graph/" + this.props.guid)
-            .then((r: { text: string }) => {
-                this.setState(JSON.parse(r.text) as Graph);
-            })
+        request
+            .get('/api/v1/graph/' + this.props.guid)
+            .then((r: { text: string }) => this.setState(JSON.parse(r.text) as Graph))
             .catch((e: Error) => console.log(e));
     }
 
@@ -33,14 +30,16 @@ export class GraphPage extends React.Component<{ guid: string }, Graph> {
         const nodeSize = 32;
         const ranksep = 100;
         const g = new dagre.graphlib.Graph();
-        g.setGraph({rankdir: "RL", "ranksep": ranksep});
+        g.setGraph({rankdir: 'RL', ranksep: ranksep});
         g.setDefaultEdgeLabel(() => ({}));
-        (this.state.nodes || []).forEach(v => g.setNode(v.guid, {
-            kind: Node.getKind(v),
-            label: v.label,
-            width: nodeSize,
-            height: nodeSize
-        }));
+        (this.state.nodes || []).forEach(v =>
+            g.setNode(v.guid, {
+                icon: Node.getIcon(v),
+                label: v.label,
+                width: nodeSize,
+                height: nodeSize
+            })
+        );
         (this.state.edges || []).forEach(e => g.setEdge(e.x, e.y));
 
         dagre.layout(g);
@@ -54,53 +53,60 @@ export class GraphPage extends React.Component<{ guid: string }, Graph> {
                         x1: edge.points[i - 1].x,
                         y1: edge.points[i - 1].y,
                         x2: edge.points[i].x,
-                        y2: edge.points[i].y,
+                        y2: edge.points[i].y
                     });
                 }
             }
             edges.push({from: v.v, to: v.w, lines});
         });
 
-        const nodes = g.nodes().map((id) => (({...g.node(id), ...{id: id}})));
+        const nodes = g.nodes().map(id => ({...g.node(id), ...{id: id}}));
         const left = nodeSize * 2;
         const top = nodeSize * 2;
         const width = nodes.map(n => n.x + n.width).reduce((l, r) => Math.max(l, r), 0) + left * 2;
         const height = nodes.map(n => n.y + n.height).reduce((l, r) => Math.max(l, r), 0) + top * 2;
 
         return (
-            <Page title='Argo Graph' toolbar={{breadcrumbs: [{title: this.props.guid}]}}>
-                <div className='graph' style={{paddingLeft: 20, width: width, height: height}}>
-                    {
-                        nodes.length == 0 && <p>No nodes</p>
-                    }
-                    {nodes.map((n: any) => <>
-                        <a key={`node-${n.id}`}
-                           className='node'
-                           href={`/graph/${n.id}`}
-                           style={{
-                               position: "absolute",
-                               left: left + n.x - nodeSize / 2,
-                               top: top + n.y - nodeSize / 2,
-                               width: nodeSize,
-                               height: nodeSize,
-                               borderRadius: nodeSize / 2,
-                               backgroundColor: "#eee",
-                               border: (n.id == this.props.guid ? 2 : 1) + "px solid #888",
-                               textAlign: "center",
-                               lineHeight: nodeSize + "px",
-                               fontWeight: n.id == this.props.guid ? "bold" : "normal",
-                           }}>{n.kind.substring(0, 1).toUpperCase()}</a>
-                        <div key={`label-${n.label}`} style={{
-                            position: "absolute",
-                            left: left + n.x - ranksep / 2,
-                            top: top + n.y + nodeSize / 2,
-                            width: ranksep,
-                            textAlign: "center",
-                            fontSize: "0.75em",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis"
-                        }}>{n.label}</div>
-                    </>)}
+            <Page title='Graph' toolbar={{breadcrumbs: [{title: this.props.guid}]}}>
+                <div className='graph' style={{width: width, height: height}}>
+                    {nodes.length == 0 && <p>No nodes</p>}
+                    {nodes.map((n: any) => (
+                        <>
+                            <a
+                                key={`node-${n.id}`}
+                                className='node'
+                                href={`/graph/${n.id}`}
+                                style={{
+                                    position: 'absolute',
+                                    left: left + n.x - nodeSize / 2,
+                                    top: top + n.y - nodeSize / 2,
+                                    width: nodeSize,
+                                    height: nodeSize,
+                                    borderRadius: nodeSize / 2,
+                                    backgroundColor: '#eee',
+                                    border: (n.id == this.props.guid ? 2 : 1) + 'px solid #888',
+                                    textAlign: 'center',
+                                    lineHeight: nodeSize + 'px',
+                                    fontWeight: n.id == this.props.guid ? 'bold' : 'normal'
+                                }}>
+                                {n.icon}
+                            </a>
+                            <div
+                                key={`label-${n.label}`}
+                                style={{
+                                    position: 'absolute',
+                                    left: left + n.x - ranksep / 2,
+                                    top: top + n.y + nodeSize / 2,
+                                    width: ranksep,
+                                    textAlign: 'center',
+                                    fontSize: '0.75em',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                }}>
+                                {n.label}
+                            </div>
+                        </>
+                    ))}
                     {edges.map(edge => (
                         <div key={`edge-${edge.from}-${edge.to}`}>
                             {edge.lines.map((line, i) => {
@@ -113,12 +119,12 @@ export class GraphPage extends React.Component<{ guid: string }, Graph> {
                                         key={`line-${edge.from}-${edge.to}-${i}`}
                                         className='line'
                                         style={{
-                                            position: "absolute",
+                                            position: 'absolute',
                                             width: distance,
                                             left: left + xMid - distance / 2,
                                             top: top + yMid,
                                             transform: `rotate(${angle}deg)`,
-                                            borderTop: "1px solid #888"
+                                            borderTop: '1px solid #888'
                                         }}
                                     />
                                 );
@@ -129,5 +135,4 @@ export class GraphPage extends React.Component<{ guid: string }, Graph> {
             </Page>
         );
     }
-
 }

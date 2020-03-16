@@ -25,35 +25,43 @@ const config = {
             {
                 test: /\.tsx?$/,
                 loaders: [...(isProd ? [] : ['react-hot-loader/webpack']), `ts-loader?allowTsInNodeModules=true&configFile=${path.resolve('./src/app/tsconfig.json')}`]
-            }, {
+            },
+            {
                 enforce: 'pre',
                 test: /\.js$/,
                 loader: 'source-map-loader'
-            }, {
+            },
+            {
                 test: /\.scss$/,
                 loader: 'style-loader!raw-loader!sass-loader'
-            }, {
+            },
+            {
                 test: /\.css$/,
                 loader: 'style-loader!raw-loader'
-            },
+            }
         ]
     },
     node: {
-        fs: 'empty',
+        fs: 'empty'
     },
     plugins: [
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-            SYSTEM_INFO: JSON.stringify({
-                version: process.env.VERSION || 'latest',
-            }),
+            'SYSTEM_INFO': JSON.stringify({
+                version: process.env.VERSION || 'latest'
+            })
         }),
         new HtmlWebpackPlugin({template: 'src/app/index.html'}),
-        new CopyWebpackPlugin([{
-            from: 'node_modules/argo-ui/src/assets', to: 'assets'
-        }, {
-            from: 'node_modules/@fortawesome/fontawesome-free/webfonts', to: 'assets/fonts'
-        }]),
+        new CopyWebpackPlugin([
+            {
+                from: 'node_modules/argo-ui/src/assets',
+                to: 'assets'
+            },
+            {
+                from: 'node_modules/@fortawesome/fontawesome-free/webfonts',
+                to: 'assets/fonts'
+            }
+        ])
     ],
     devServer: {
         historyApiFallback: {
@@ -61,8 +69,8 @@ const config = {
         },
         proxy: {
             '/api': {
-                'target': isProd ? '' : 'http://localhost:5678',
-                'secure': false,
+                target: isProd ? '' : 'http://localhost:5678',
+                secure: false
             }
         }
     }

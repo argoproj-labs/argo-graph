@@ -49,14 +49,22 @@ func getClusterConfigs() map[string]*rest.Config {
 }
 
 func startHttpServer(ctx context.Context, db DB) {
-	pattern := "/api/v1/graph/"
-	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-		guid := GUID(strings.TrimPrefix(r.URL.Path, pattern))
-		marshal, err := json.Marshal(db.GetGraph(ctx, guid))
+	http.HandleFunc("/api/v1/nodes", func(w http.ResponseWriter, r *http.Request) {
+		marshal, err := json.Marshal(db.ListNodes(ctx))
 		checkError(err)
 		_, err = w.Write(marshal)
 		checkError(err)
 	})
+	{
+		pattern := "/api/v1/graph/"
+		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+			guid := GUID(strings.TrimPrefix(r.URL.Path, pattern))
+			marshal, err := json.Marshal(db.GetGraph(ctx, guid))
+			checkError(err)
+			_, err = w.Write(marshal)
+			checkError(err)
+		})
+	}
 	http.Handle("/", Server)
 	addr := ":5678"
 	go func() {

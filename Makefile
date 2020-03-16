@@ -21,3 +21,4 @@ graph/staticfiles.go: $(HOME)/go/bin/staticfiles ui/dist/app/index.html
 .PHONY: lint
 lint:
 	golangci-lint -v run --fix --skip-files graph/staticfiles.go
+	yarn --cwd ui lint
