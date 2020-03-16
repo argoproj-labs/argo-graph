@@ -17,3 +17,7 @@ $(HOME)/go/bin/staticfiles:
 graph/staticfiles.go: $(HOME)/go/bin/staticfiles ui/dist/app/index.html
 	# Pack UI into a Go file.
 	staticfiles -o graph/staticfiles.go ui/dist/app
+
+.PHONY: lint
+lint:
+	golangci-lint -v run --fix --skip-files graph/staticfiles.go
