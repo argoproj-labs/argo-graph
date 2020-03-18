@@ -87,7 +87,7 @@ export class GraphPanel extends React.Component<Props, State> {
         const top = nodeSize * 2;
 
         return (<>
-                <div className='graph' style={{width: width, height: height}}>
+                <div key='graph' className='graph' style={{width: width, height: height}}>
                     {nodes.map((n: any) => (
                         <>
                             <div

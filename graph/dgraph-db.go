@@ -16,6 +16,22 @@ type dgraphDB struct {
 	dg   *dgo.Dgraph
 }
 
+func (d *dgraphDB) GetNode(ctx context.Context, guid GUID) Node {
+	resp, err := d.dg.NewReadOnlyTxn().Query(ctx, `query Me(){
+	resources(func: eq(xid, "`+string(guid)+`")) {
+        xid
+        label
+    }
+}`)
+	checkError(err)
+	var r Root
+	checkError(json.Unmarshal(resp.Json, &r))
+	for _, r := range r.Resources {
+		return Node{GUID: GUID(r.XID), Label: r.Label}
+	}
+	return Node{}
+}
+
 type Root struct {
 	Resources []Resource `json:"resources"`
 }

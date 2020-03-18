@@ -21,9 +21,11 @@ export class GraphPage extends React.Component<Props, State> {
         return (
             <Page title='Graph' toolbar={{breadcrumbs: [{title: this.props.guid}]}}>
                 <GraphPanel guid={this.props.guid} onSelect={selectedGuid => this.setState({selectedGuid})}/>
-                <SlidingPanel isShown={!!this.state.selectedGuid} onClose={() => this.setState({selectedGuid: null})}>
+                {this.state.selectedGuid &&
+                <SlidingPanel isShown={true} onClose={() => this.setState({selectedGuid: null})}>
                     <NodeInfoPanel guid={this.state.selectedGuid}/>
                 </SlidingPanel>
+                }
             </Page>
         );
     }

@@ -13,7 +13,7 @@ export class NodeListPage extends React.Component<{}, { nodes?: Node[] }> {
 
     componentDidMount() {
         request
-            .get('/api/v1/nodes')
+            .get('/api/v1/nodes/')
             .then((r: { text: string }) => this.setState({nodes: JSON.parse(r.text) as Node[]}))
             .catch((e: Error) => console.log(e));
     }
