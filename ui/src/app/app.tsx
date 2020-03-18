@@ -48,7 +48,7 @@ export class App extends React.Component<{}, {}> {
     public getChildContext() {
         return {
             history: history,
-            router: {route: {location: {pathname: '/nodes'}}}
+            router: {route: {location: {pathname: '/nodes'}}, history: history}
         };
     }
 }
