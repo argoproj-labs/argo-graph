@@ -1,27 +1,22 @@
 # Argo Graph
 
-POC for graphing resources across clusters.
+**Argo Graph** is an open source container-native resource dependency analysis system for graphing Kubernetes resources and the relationships between them.
 
-## Proposal
+## How Does It Work
 
-* [Proposal](https://docs.google.com/document/d/15H09bsRvdyIAPSUjsnlmqzu-z3N9ZfLnYb-CEJ8uBaM/edit)
+It watches for resources in one or more clusters labelled with `graph.argoproj.io/node`. If extracts the following annotations:
+
+* `graph.argoproj.io/edges` - a comma-separated list of related nodes
+* `graph.argoproj.io/label` - a label for the node
 
 ## Usage
 
-Create at least two clusters, one to run in, one or more to monitor,
-
-```
-k3d create --name other --api-port 7443
-export KUBECONFIG=$(k3d get-kubeconfig):$(k3d get-kubeconfig --name other)
-kubectx ;# should list two or more clusters
-```
-
-In your default cluster:
+In your  cluster:
 
 ```
 kubectl create ns argo-graph
 kubens argo-graph
-go run ./cmd cluster add other
+go run ./cmd cluster add k3s-default
 kubectl get secret clusters -o yaml ;# should show your cluster
 ```
 
@@ -40,12 +35,10 @@ make start
 In a new terminal:
 
 ```
-export KUBECONFIG=$(k3d get-kubeconfig):$(k3d get-kubeconfig --name other)
-kubectx other
-kubens default
-kubectl delete pod -l graph.argoproj.io/node
-kubectl delete cm -l graph.argoproj.io/node
-kubectl apply -f examples/hello-world.yaml
+export KUBECONFIG=$(k3d get-kubeconfig)
+kubectl -d default delete pod -l graph.argoproj.io/node
+kubectl -d default delete cm -l graph.argoproj.io/node
+kubectl -d default apply -f examples/hello-world.yaml
 ```
 
 Open localhost:5678.

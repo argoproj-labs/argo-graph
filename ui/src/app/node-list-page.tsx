@@ -21,7 +21,7 @@ export class NodeListPage extends React.Component<{}, { nodes?: Node[] }> {
     public render() {
         return (
             <Page title='Nodes' toolbar={{breadcrumbs: [{title: 'Nodes', path: '/nodes'}]}}>
-                {this.state.nodes && <>
+                {this.state.nodes && this.state.nodes.length > 0 && <>
                     <div className='argo-table-list'>
                         <div className='row argo-table-list__head'>
                             <div className='columns large-1'/>
