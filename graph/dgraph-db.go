@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/dgraph-io/dgo/v2"
 	"github.com/dgraph-io/dgo/v2/protos/api"
@@ -137,7 +138,7 @@ type Resource struct {
 
 func NewDB(dropSchema bool) DB {
 	log.Info("creating database connection")
-	conn, err := grpc.Dial("localhost:9080", grpc.WithInsecure())
+	conn, err := grpc.Dial(os.Getenv("DGRAPH_HOST")+":9080", grpc.WithInsecure())
 	checkError(err)
 	dg := dgo.NewDgraphClient(api.NewDgraphClient(conn))
 	ctx := context.Background()
