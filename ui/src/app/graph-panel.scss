@@ -1,9 +1,12 @@
 .node {
+  background-color: white;
+  border: 1px solid #888;
+  cursor: pointer;
 }
 
 .line {
-  &:first-child {
-    &:before {
+  &:nth-child(1) {
+    &:after {
       content: '\25BA';
       position: absolute;
       color: #888;

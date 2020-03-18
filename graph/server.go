@@ -56,6 +56,16 @@ func startHttpServer(ctx context.Context, db DB) {
 		checkError(err)
 	})
 	{
+		pattern := "/api/v1/nodes/"
+		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+			guid := GUID(strings.TrimPrefix(r.URL.Path, pattern))
+			marshal, err := json.Marshal(db.GetNode(ctx, guid))
+			checkError(err)
+			_, err = w.Write(marshal)
+			checkError(err)
+		})
+	}
+	{
 		pattern := "/api/v1/graph/"
 		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 			guid := GUID(strings.TrimPrefix(r.URL.Path, pattern))
