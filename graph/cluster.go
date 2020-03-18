@@ -23,9 +23,9 @@ func init() {
 	ClusterCommand.AddCommand(&cobra.Command{
 		Use: "add [CONTEXT_NAME...]",
 		Run: func(cmd *cobra.Command, args []string) {
+			startingConfig, err := clientcmd.NewDefaultPathOptions().GetStartingConfig()
+			checkError(err)
 			for _, contextName := range args {
-				startingConfig, err := clientcmd.NewDefaultPathOptions().GetStartingConfig()
-				checkError(err)
 				configOverrides := &clientcmd.ConfigOverrides{Context: *startingConfig.Contexts[contextName]}
 				restConfig := restConfig(clientcmd.NewDefaultClientConfig(*startingConfig, configOverrides))
 				secrets := getKubernetes().CoreV1().Secrets(namespace)

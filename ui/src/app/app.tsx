@@ -26,17 +26,17 @@ export class App extends React.Component<{}, {}> {
                     <Layout navItems={[{title: 'Nodes', iconClassName: 'fa fa-list', path: '/nodes'}]}>
                         <Switch>
                             <Route path='/nodes'>
-                                <NodeListPage/>
+                                <NodeListPage />
                             </Route>
                             <Route
                                 path='/graph/:cluster/:namespace/:kind/:name'
                                 component={() => {
                                     const {cluster, namespace, kind, name} = useParams();
-                                    return <GraphPage guid={cluster + '/' + namespace + '/' + kind + '/' + name}/>;
+                                    return <GraphPage guid={cluster + '/' + namespace + '/' + kind + '/' + name} />;
                                 }}
                             />
                             <Route>
-                                <Redirect to='/nodes'/>
+                                <Redirect to='/nodes' />
                             </Route>
                         </Switch>
                     </Layout>

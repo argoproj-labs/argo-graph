@@ -32,7 +32,7 @@ var ServerCommand = &cobra.Command{
 }
 
 func init() {
-	ServerCommand.Flags().BoolVar(&dropSchema, "--drop-schema", false, "Drop the database's schema on start")
+	ServerCommand.Flags().BoolVar(&dropSchema, "drop-schema", false, "Drop the database's schema on start")
 }
 
 func getClusterConfigs() map[string]*rest.Config {
@@ -49,31 +49,47 @@ func getClusterConfigs() map[string]*rest.Config {
 }
 
 func startHttpServer(ctx context.Context, db DB) {
-	http.HandleFunc("/api/v1/nodes", func(w http.ResponseWriter, r *http.Request) {
-		marshal, err := json.Marshal(db.ListNodes(ctx))
-		checkError(err)
-		_, err = w.Write(marshal)
-		checkError(err)
-	})
-	{
-		pattern := "/api/v1/nodes/"
-		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-			guid := GUID(strings.TrimPrefix(r.URL.Path, pattern))
-			marshal, err := json.Marshal(db.GetNode(ctx, guid))
+
+	jsonFunc := func(f func(r *http.Request) (int, interface{})) func(w http.ResponseWriter, r *http.Request) {
+		return func(w http.ResponseWriter, q *http.Request) {
+			defer func() {
+				if r := recover(); r != nil {
+					marshal, _ := json.Marshal(r)
+					w.WriteHeader(500)
+					_, _ = w.Write(marshal)
+					log.WithFields(log.Fields{"url": q.URL, "statusCode": 500}).Error(r)
+				}
+			}()
+			statusCode, v := f(q)
+			marshal, err := json.Marshal(v)
 			checkError(err)
+			w.WriteHeader(200)
+			w.Header().Set("Content-Type", "application/json")
 			_, err = w.Write(marshal)
 			checkError(err)
-		})
+			log.WithFields(log.Fields{"url": q.URL, "statusCode": statusCode}).Debug()
+		}
+	}
+	http.HandleFunc("/api/v1/nodes", jsonFunc(func(r *http.Request) (int, interface{}) {
+		return 200, db.ListNodes(ctx)
+	}))
+	{
+		pattern := "/api/v1/nodes/"
+		http.HandleFunc(pattern, jsonFunc(func(r *http.Request) (int, interface{}) {
+			guid := GUID(strings.TrimPrefix(r.URL.Path, pattern))
+			node := db.GetNode(ctx, guid)
+			if node.IsZero() {
+				return 404, nil
+			}
+			return 200, node
+		}))
 	}
 	{
 		pattern := "/api/v1/graph/"
-		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc(pattern, jsonFunc(func(r *http.Request) (int, interface{}) {
 			guid := GUID(strings.TrimPrefix(r.URL.Path, pattern))
-			marshal, err := json.Marshal(db.GetGraph(ctx, guid))
-			checkError(err)
-			_, err = w.Write(marshal)
-			checkError(err)
-		})
+			return 200, db.GetGraph(ctx, guid)
+		}))
 	}
 	http.Handle("/", Server)
 	addr := ":5678"
@@ -123,40 +139,53 @@ func watchResources(ctx context.Context, resource dynamic.ResourceInterface, sub
 		case <-ctx.Done():
 			return
 		case event, ok := <-w.ResultChan():
-			if ok && event.Type != watch.Deleted {
-				obj := event.Object.(*unstructured.Unstructured)
-				x := NewGUID(clusterName, obj.GetNamespace(), kind, obj.GetName())
-				label, ok := obj.GetAnnotations()["graph.argoproj.io/node-label"]
-				if !ok {
-					label = obj.GetName()
-				}
-				db.AddNode(ctx, Node{GUID: x, Label: label})
-				edges, ok := obj.GetAnnotations()["graph.argoproj.io/edges"]
-				if ok {
-					for _, id := range strings.Split(edges, ",") {
-						parts := strings.SplitN(id, "/", 4)
-						if len(parts) != 4 {
-							log.WithFields(log.Fields{"x": x, "y": id}).Errorf("expected 4 fields")
-							continue
-						}
-						if parts[0] == "" {
-							parts[0] = clusterName
-						}
-						if parts[1] == "" {
-							parts[1] = obj.GetNamespace()
-						}
-						if parts[2] == "" {
-							parts[2] = kind
-						}
-						y := NewGUID(parts[0], parts[1], parts[2], parts[3])
-						db.AddNode(ctx, Node{GUID: y})
-						e := Edge{x, y}
-						db.AddEdge(ctx, e)
-						log.Infof("%v", e)
+			if ok {
+				if event.Type != watch.Deleted {
+					obj := event.Object.(*unstructured.Unstructured)
+					node := NewGUID(clusterName, obj.GetNamespace(), kind, obj.GetName())
+					log.WithField("guid", node).Debug()
+					label, ok := obj.GetAnnotations()["graph.argoproj.io/node-label"]
+					if !ok {
+						label = obj.GetName()
 					}
-				} else {
-					log.WithField("x", x).Info("no inbound edges")
+					phase := ""
+					spec, ok := obj.Object["status"].(map[string]interface{})
+					if ok {
+						p, ok := spec["phase"]
+						if ok {
+							phase = p.(string)
+						}
+					}
+					db.AddNode(ctx, Node{GUID: node, Label: label, Phase: phase})
+					edges, ok := obj.GetAnnotations()["graph.argoproj.io/edges"]
+					if ok {
+						for _, id := range strings.Split(edges, ",") {
+							parts := strings.SplitN(id, "/", 4)
+							if len(parts) != 4 {
+								log.WithFields(log.Fields{"x": node, "y": id}).Errorf("expected 4 fields")
+								continue
+							}
+							if parts[0] == "" {
+								parts[0] = clusterName
+							}
+							if parts[1] == "" {
+								parts[1] = obj.GetNamespace()
+							}
+							if parts[2] == "" {
+								parts[2] = kind
+							}
+							y := NewGUID(parts[0], parts[1], parts[2], parts[3])
+							db.AddNode(ctx, Node{GUID: y})
+							e := Edge{node, y}
+							db.AddEdge(ctx, e)
+							log.Infof("%v", e)
+						}
+					} else {
+						log.WithField("x", node).Info("no inbound edges")
+					}
 				}
+			} else {
+				log.Warn("not ok")
 			}
 		}
 	}

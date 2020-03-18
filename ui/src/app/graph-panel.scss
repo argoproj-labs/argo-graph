@@ -1,18 +1,18 @@
 .node {
-  background-color: white;
-  border: 1px solid #888;
-  cursor: pointer;
+    background-color: white;
+    border: 1px solid #888;
+    cursor: pointer;
 }
 
 .line {
-  &:nth-child(1) {
-    &:after {
-      content: '\25BA';
-      position: absolute;
-      color: #888;
-      font-size: 12px;
-      top: -9px;
-      left: -1px;
+    &:nth-child(1) {
+        &:after {
+            content: '\25BA';
+            position: absolute;
+            color: #888;
+            font-size: 12px;
+            top: -9px;
+            left: -1px;
+        }
     }
-  }
 }

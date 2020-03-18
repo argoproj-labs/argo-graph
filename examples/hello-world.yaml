@@ -7,9 +7,10 @@ metadata:
   annotations:
     graph.argoproj.io/node-label: Kevin Spacey
 spec:
+  restartPolicy: Never
   containers:
     - name: main
-      image: cowsay:v1
+      image: docker/whalesay:latest
 ---
 apiVersion: v1
 kind: Pod
@@ -21,9 +22,10 @@ metadata:
     graph.argoproj.io/edges: "///kspacey"
     graph.argoproj.io/node-label: Saul Williams
 spec:
+  restartPolicy: Never
   containers:
     - name: main
-      image: cowsay:v1
+      image: docker/whalesay:latest
 ---
 apiVersion: v1
 kind: Pod
@@ -34,9 +36,10 @@ metadata:
   annotations:
     graph.argoproj.io/node-label: Brad Pitt
 spec:
+  restartPolicy: Never
   containers:
     - name: main
-      image: cowsay:v1
+      image: docker/whalesay:latest
 ---
 apiVersion: v1
 kind: Pod
@@ -47,9 +50,10 @@ metadata:
   annotations:
     graph.argoproj.io/node-label: Harrison Ford
 spec:
+  restartPolicy: Never
   containers:
     - name: main
-      image: cowsay:v1
+      image: docker/whalesay:latest
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -71,6 +75,7 @@ metadata:
     graph.argoproj.io/edges: "///swilliams,///bpitt,//configmaps/lwilson"
     graph.argoproj.io/node-label: Kevin Bacon
 spec:
+  restartPolicy: Never
   containers:
     - name: main
-      image: cowsay:v1
+      image: docker/whalesay:latest

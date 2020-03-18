@@ -15,6 +15,7 @@ func NewGUID(cluster, namespace, kind, name string) GUID {
 type Node struct {
 	GUID  GUID   `json:"guid"`
 	Label string `json:"label"`
+	Phase string `json:"phase,omitempty"`
 }
 
 func (v Node) GetKind() string {
@@ -23,6 +24,10 @@ func (v Node) GetKind() string {
 
 func (v Node) parts() []string {
 	return strings.SplitN(string(v.GUID), "/", 4)
+}
+
+func (v Node) IsZero() bool {
+	return v.GUID == ""
 }
 
 type Edge struct {

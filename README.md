@@ -23,7 +23,7 @@ kubectl get secret clusters -o yaml ;# should show your cluster
 Start database
 
 ```
-docker run --rm -it -p 7000:7000 -p 7080:7080 -p 9080:9080 dgraph/standalone:latest
+docker run --rm -it -p 7000:8000 -p 7080:8080 -p 9080:9080 dgraph/standalone:latest
 ```
 
 Start server:
@@ -34,11 +34,9 @@ make start
 
 In a new terminal:
 
-```
-export KUBECONFIG=$(k3d get-kubeconfig)
-kubectl -d default delete pod -l graph.argoproj.io/node
-kubectl -d default delete cm -l graph.argoproj.io/node
-kubectl -d default apply -f examples/hello-world.yaml
+kubectl -n default delete pod -l graph.argoproj.io/node
+kubectl -n default delete cm -l graph.argoproj.io/node
+kubectl -n default apply -f examples/hello-world.yaml
 ```
 
 Open localhost:5678.

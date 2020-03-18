@@ -1,0 +1,14 @@
+i.phase-icon {
+    &.error {
+        color: red;
+    }
+    &.failed {
+        color: red;
+    }
+    &.running {
+        color: blue;
+    }
+    &.succeeded {
+        color: green;
+    }
+}

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import * as dagre from 'dagre';
-import {Graph, Node} from './types';
-import {ZeroState} from "./zero-state";
+import {Graph} from './types';
+import {ZeroState} from './zero-state';
+import {PhaseIcon} from './phase-icon';
 
 const request = require('superagent');
 require('./graph-panel.scss');
@@ -23,27 +24,25 @@ interface State {
 }
 
 export class GraphPanel extends React.Component<Props, State> {
-    private graphBox: React.RefObject<any>;
+    private readonly graphBox: React.RefObject<any>;
     private width: number;
 
     constructor(props: Readonly<Props>) {
         super(props);
         this.state = {graph: {}};
-        this.graphBox = React.createRef()
+        this.graphBox = React.createRef();
     }
 
     componentDidMount() {
         this.width = this.graphBox.current.offsetWidth;
         request
             .get('/api/v1/graph/' + this.props.guid)
-            .then((r: { text: string }) => this.setState({graph: JSON.parse(r.text) as Graph}))
+            .then((r: {text: string}) => this.setState({graph: JSON.parse(r.text) as Graph}))
             .catch((e: Error) => console.log(e));
     }
 
     public render() {
-        return <div ref={this.graphBox}>
-            {!this.state.graph.nodes && <ZeroState title='No nodes'/> || this.renderGraph()}
-        </div>
+        return <div ref={this.graphBox}>{(!this.state.graph.nodes && <ZeroState title='No nodes' />) || this.renderGraph()}</div>;
     }
 
     renderGraph() {
@@ -52,10 +51,10 @@ export class GraphPanel extends React.Component<Props, State> {
         const g = new dagre.graphlib.Graph();
         g.setGraph({rankdir: 'RL', ranksep: ranksep});
         g.setDefaultEdgeLabel(() => ({}));
-        (this.state.graph.nodes || []).forEach(v =>
-            g.setNode(v.guid, {
-                icon: Node.getIcon(v),
-                label: v.label,
+        (this.state.graph.nodes || []).forEach(n =>
+            g.setNode(n.guid, {
+                label: n.label,
+                phase: n.phase,
                 width: nodeSize,
                 height: nodeSize
             })
@@ -63,7 +62,7 @@ export class GraphPanel extends React.Component<Props, State> {
         (this.state.graph.edges || []).forEach(e => g.setEdge(e.x, e.y));
 
         dagre.layout(g);
-        const edges: { from: string; to: string; lines: Line[] }[] = [];
+        const edges: {from: string; to: string; lines: Line[]}[] = [];
         g.edges().forEach(v => {
             const edge = g.edge(v);
             const lines: Line[] = [];
@@ -86,7 +85,8 @@ export class GraphPanel extends React.Component<Props, State> {
         const left = (this.width - width) / 2 + nodeSize;
         const top = nodeSize * 2;
 
-        return (<>
+        return (
+            <>
                 <div key='graph' className='graph' style={{width: width, height: height}}>
                     {nodes.map((n: any) => (
                         <>
@@ -102,10 +102,9 @@ export class GraphPanel extends React.Component<Props, State> {
                                     height: nodeSize,
                                     borderRadius: nodeSize / 2,
                                     textAlign: 'center',
-                                    lineHeight: nodeSize + 'px',
-                                    fontWeight: n.id == this.props.guid ? 'bold' : 'normal'
+                                    lineHeight: nodeSize + 'px'
                                 }}>
-                                {n.icon}
+                                <PhaseIcon phase={n.phase} />
                             </div>
                             <div
                                 key={`label-${n.label}`}

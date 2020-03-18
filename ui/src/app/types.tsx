@@ -23,6 +23,7 @@ export class Node {
 
     guid: string;
     label: string;
+    phase: string;
 }
 
 export interface Graph {
