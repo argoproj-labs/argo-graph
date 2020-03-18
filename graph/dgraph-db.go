@@ -113,7 +113,7 @@ func add(g *Graph, rs []Resource) {
 
 func (d *dgraphDB) GetGraph(ctx context.Context, guid GUID) Graph {
 	resp, err := d.dg.NewTxn().Query(ctx, fmt.Sprintf(`query Me(){
-	resources(func: eq(xid, "%s")) @recurse(depth: 3){
+	resources(func: eq(xid, "%s")) @recurse(depth: 10){
         xid
         label
         follows
