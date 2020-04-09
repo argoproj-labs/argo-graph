@@ -34,6 +34,7 @@ make start
 
 In a new terminal:
 
+```
 kubectl -n default delete pod -l graph.argoproj.io/node
 kubectl -n default delete cm -l graph.argoproj.io/node
 kubectl -n default apply -f examples/hello-world.yaml
